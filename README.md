@@ -15,7 +15,7 @@ This repository is intended to be worked on collaboratively with an AI coding ag
 
 ## High-Level Game Design
 - **Genre**: 2D arcade beat ’em up
-- **Perspective**: Side-on camera with vertical movement for depth (Y-axis lanes)
+- **Perspective**: Side-on camera with vertical movement for depth (Y-axis lanes) 
 - **Platform**: Windows (initially)
 - **Graphics**: Sprite-based (no 3D models for this project)
 
@@ -95,6 +95,14 @@ When making changes:
 - Do NOT add assets or large dependencies unless explicitly instructed
 - Do NOT auto-run terminal commands without user approval
 - Ask for clarification if a design decision is ambiguous
+
+---
+
+### Movement & Combat Depth Model
+- Movement is 2D with continuous X/Y axes.
+- The Y axis represents “depth” (Final Fight / Streets of Rage style), not discrete lanes.
+- Attacks are intended to connect only when attacker and target are within a small Y-distance (“depth tolerance”).
+- Depth tolerance rules may be layered on after basic combat is working.
 
 ---
 

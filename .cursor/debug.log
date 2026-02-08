@@ -1,0 +1,13 @@
+{"hypothesisId":"H0","location":"Player._Ready","message":"Player ready","data":{"hitboxScriptNotNull":true}}
+{"hypothesisId":"H1","location":"Player._PhysicsProcess","message":"attack JustPressed","data":{"isPunching":false}}
+{"hypothesisId":"H2","location":"Player.StartPunch","message":"StartPunch called","data":{"monitoringAfter":true}}
+{"hypothesisId":"H3","location":"Hitbox.OnAreaEntered","message":"AreaEntered","data":{"areaName":{"IsEmpty":false},"inHurtboxGroup":true}}
+{"hypothesisId":"H5","location":"Player.OnPunchHit","message":"OnPunchHit","data":{"parentType":"Enemy","isEnemy":true}}
+{"hypothesisId":"H1","location":"Player._PhysicsProcess","message":"attack JustPressed","data":{"isPunching":false}}
+{"hypothesisId":"H2","location":"Player.StartPunch","message":"StartPunch called","data":{"monitoringAfter":true}}
+{"hypothesisId":"H3","location":"Hitbox.OnAreaEntered","message":"AreaEntered","data":{"areaName":{"IsEmpty":false},"inHurtboxGroup":true}}
+{"hypothesisId":"H5","location":"Player.OnPunchHit","message":"OnPunchHit","data":{"parentType":"Enemy","isEnemy":true}}
+{"hypothesisId":"H1","location":"Player._PhysicsProcess","message":"attack JustPressed","data":{"isPunching":false}}
+{"hypothesisId":"H2","location":"Player.StartPunch","message":"StartPunch called","data":{"monitoringAfter":true}}
+{"hypothesisId":"H3","location":"Hitbox.OnAreaEntered","message":"AreaEntered","data":{"areaName":{"IsEmpty":false},"inHurtboxGroup":true}}
+{"hypothesisId":"H5","location":"Player.OnPunchHit","message":"OnPunchHit","data":{"parentType":"Enemy","isEnemy":true}}

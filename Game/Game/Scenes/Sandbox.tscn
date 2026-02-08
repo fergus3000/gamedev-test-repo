@@ -1,0 +1,69 @@
+[gd_scene load_steps=7 format=3 uid="uid://c8x7k9m2n4p5q"]
+
+[ext_resource type="Script" path="res://Game/Core/Sandbox.cs" id="1_sandbox"]
+[ext_resource type="Script" path="res://Game/Entities/Player.cs" id="2_player"]
+[ext_resource type="Script" path="res://Game/Combat/Hitbox.cs" id="3_hitbox"]
+[ext_resource type="Script" path="res://Game/Entities/Enemy.cs" id="4_enemy"]
+
+[sub_resource type="RectangleShape2D" id="1_rect_player"]
+size = Vector2(32, 48)
+
+[sub_resource type="RectangleShape2D" id="2_rect_hitbox"]
+size = Vector2(24, 32)
+
+[sub_resource type="RectangleShape2D" id="3_rect_enemy"]
+size = Vector2(32, 48)
+
+[node name="Sandbox" type="Node2D"]
+script = ExtResource("1_sandbox")
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(200, 300)
+script = ExtResource("2_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("1_rect_player")
+
+[node name="Visual" type="ColorRect" parent="Player"]
+offset_left = -16.0
+offset_top = -24.0
+offset_right = 16.0
+offset_bottom = 24.0
+color = Color(0.2, 0.6, 1, 1)
+
+[node name="PunchHitbox" type="Area2D" parent="Player"]
+position = Vector2(40, 0)
+script = ExtResource("3_hitbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/PunchHitbox"]
+shape = SubResource("2_rect_hitbox")
+
+[node name="Enemy" type="CharacterBody2D" parent="."]
+position = Vector2(500, 300)
+script = ExtResource("4_enemy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy"]
+shape = SubResource("3_rect_enemy")
+
+[node name="Visual" type="ColorRect" parent="Enemy"]
+offset_left = -16.0
+offset_top = -24.0
+offset_right = 16.0
+offset_bottom = 24.0
+color = Color(1, 0.3, 0.3, 1)
+
+[node name="Hurtbox" type="Area2D" parent="Enemy"]
+groups = ["hurtbox"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy/Hurtbox"]
+shape = SubResource("3_rect_enemy")
+
+[node name="DebugOverlay" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="DebugOverlay"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 400.0
+offset_bottom = 60.0
+text = "HP: --  State: --"
+horizontal_alignment = 1
