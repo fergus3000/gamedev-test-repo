@@ -10,6 +10,7 @@ public partial class Player : CharacterBody2D
 	[Export] public float PunchDuration { get; set; } = 0.15f;
 	[Export] public float PunchDamage { get; set; } = 10.0f;
 	[Export] public float PunchKnockbackStrength { get; set; } = 300.0f;
+	[Export] public float DepthTolerancePx { get; set; } = 24.0f;
 
 	private Area2D _punchHitbox;
 	private Hitbox _hitboxScript;
@@ -150,6 +151,10 @@ public partial class Player : CharacterBody2D
 		Node parent = hurtbox.GetParent();
 		if (parent is Enemy enemy)
 		{
+			// Depth tolerance: only hit if within Y-range (Final Fight style)
+			if (Mathf.Abs(GlobalPosition.Y - enemy.GlobalPosition.Y) > DepthTolerancePx)
+				return;
+
 			// Calculate knockback direction (away from player)
 			Vector2 knockbackDir = (enemy.GlobalPosition - GlobalPosition).Normalized();
 			if (knockbackDir.Length() < 0.1f)
