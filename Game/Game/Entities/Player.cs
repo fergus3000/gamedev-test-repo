@@ -1,10 +1,6 @@
 using Godot;
 
-/// <summary>
-/// Player controller: handles movement, facing, punch attacks, and taking damage.
-/// Uses CharacterBody2D for physics-based movement.
-/// </summary>
-public partial class Player : CharacterBody2D
+public partial class Player : CharacterBody2D, IDamageable
 {
 	[Export] public float MaxHP { get; set; } = 100.0f;
 	[Export] public float MoveSpeed { get; set; } = 200.0f;
@@ -12,9 +8,7 @@ public partial class Player : CharacterBody2D
 	[Export] public float PunchDamage { get; set; } = 10.0f;
 	[Export] public float PunchKnockbackStrength { get; set; } = 300.0f;
 	[Export] public float HitstunDuration { get; set; } = 0.4f;
-	// Velocity multiplier per 60 fps frame — normalised to delta in code so framerate doesn't matter
-	[Export] public float KnockbackDecay { get; set; } = 0.85f;
-	[Export] public float DepthTolerancePx { get; set; } = 24.0f;
+	[Export] public float KnockbackDecay { get; set; } = CombatConstants.KnockbackDecayBase;
 
 	public enum PlayerState { Normal, Hitstun, Dead }
 
@@ -144,8 +138,8 @@ public partial class Player : CharacterBody2D
 	private void UpdateFacing(bool facingRight)
 	{
 		Scale = new Vector2(facingRight ? 1.0f : -1.0f, 1.0f);
-		if (_punchHitbox != null)
-			_punchHitbox.Position = new Vector2(40.0f, 0.0f);
+		// Hitbox offset is always +X in local space; Scale.X flip on the parent mirrors it automatically
+		_punchHitbox.Position = new Vector2(CombatConstants.HitboxOffsetX, 0.0f);
 	}
 
 	private void StartPunch()
@@ -173,16 +167,16 @@ public partial class Player : CharacterBody2D
 	private void OnPunchHit(Area2D hurtbox)
 	{
 		Node parent = hurtbox.GetParent();
-		if (parent is Enemy enemy)
+		if (parent is IDamageable target && parent is Node2D targetNode)
 		{
-			if (Mathf.Abs(GlobalPosition.Y - enemy.GlobalPosition.Y) > DepthTolerancePx)
+			if (Mathf.Abs(GlobalPosition.Y - targetNode.GlobalPosition.Y) > CombatConstants.DepthTolerancePx)
 				return;
 
-			Vector2 knockbackDir = (enemy.GlobalPosition - GlobalPosition).Normalized();
+			Vector2 knockbackDir = (targetNode.GlobalPosition - GlobalPosition).Normalized();
 			if (knockbackDir.Length() < 0.1f)
 				knockbackDir = Scale.X > 0.0f ? Vector2.Right : Vector2.Left;
 
-			enemy.TakeDamage(PunchDamage, knockbackDir * PunchKnockbackStrength);
+			target.TakeDamage(PunchDamage, knockbackDir * PunchKnockbackStrength);
 		}
 	}
 }

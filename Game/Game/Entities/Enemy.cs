@@ -1,10 +1,6 @@
 using Godot;
 
-/// <summary>
-/// Enemy: walks toward the player, attacks at melee range, takes damage and enters hitstun.
-/// Uses CharacterBody2D for physics-based movement.
-/// </summary>
-public partial class Enemy : CharacterBody2D
+public partial class Enemy : CharacterBody2D, IDamageable
 {
 	[Export] public float MaxHP { get; set; } = 30.0f;
 	[Export] public float WalkSpeed { get; set; } = 80.0f;
@@ -14,9 +10,7 @@ public partial class Enemy : CharacterBody2D
 	[Export] public float AttackDamage { get; set; } = 8.0f;
 	[Export] public float AttackKnockback { get; set; } = 200.0f;
 	[Export] public float HitstunDuration { get; set; } = 0.3f;
-	// Velocity multiplier per 60 fps frame — normalised to delta in code so framerate doesn't matter
-	[Export] public float KnockbackDecay { get; set; } = 0.85f;
-	[Export] public float DepthTolerancePx { get; set; } = 24.0f;
+	[Export] public float KnockbackDecay { get; set; } = CombatConstants.KnockbackDecayBase;
 
 	public enum EnemyState { Idle, Walking, Attacking, Hitstun, Dead }
 
@@ -25,7 +19,7 @@ public partial class Enemy : CharacterBody2D
 	private float _hitstunTimer = 0.0f;
 	private float _attackTimer = 0.0f;
 	private float _attackCooldownTimer = 0.0f;
-	private Player _player;
+	private Node2D _player;
 	private Area2D _attackHitbox;
 	private Hitbox _hitboxScript;
 	private CanvasItem _visual;
@@ -38,7 +32,7 @@ public partial class Enemy : CharacterBody2D
 		_currentHP = MaxHP;
 
 		// Find player — Player._Ready() runs first (scene order), so the group is already populated
-		_player = GetTree().GetFirstNodeInGroup("player") as Player;
+		_player = GetTree().GetFirstNodeInGroup("player") as Node2D;
 		if (_player != null)
 			_state = EnemyState.Walking;
 
@@ -106,7 +100,7 @@ public partial class Enemy : CharacterBody2D
 			_attackCooldownTimer -= delta;
 
 		Vector2 toPlayer = _player.GlobalPosition - GlobalPosition;
-		bool inDepth = Mathf.Abs(toPlayer.Y) <= DepthTolerancePx;
+		bool inDepth = Mathf.Abs(toPlayer.Y) <= CombatConstants.DepthTolerancePx;
 
 		if (toPlayer.Length() <= AttackRange && inDepth && _attackCooldownTimer <= 0f)
 		{
@@ -173,22 +167,23 @@ public partial class Enemy : CharacterBody2D
 	{
 		Scale = new Vector2(facingRight ? 1.0f : -1.0f, 1.0f);
 		if (_attackHitbox != null)
-			_attackHitbox.Position = new Vector2(40.0f, 0.0f);
+			// Hitbox offset is always +X in local space; Scale.X flip on the parent mirrors it automatically
+			_attackHitbox.Position = new Vector2(CombatConstants.HitboxOffsetX, 0.0f);
 	}
 
 	private void OnAttackHit(Area2D hurtbox)
 	{
 		Node parent = hurtbox.GetParent();
-		if (parent is Player player)
+		if (parent is IDamageable target && parent is Node2D targetNode)
 		{
-			if (Mathf.Abs(GlobalPosition.Y - player.GlobalPosition.Y) > DepthTolerancePx)
+			if (Mathf.Abs(GlobalPosition.Y - targetNode.GlobalPosition.Y) > CombatConstants.DepthTolerancePx)
 				return;
 
-			Vector2 knockbackDir = (player.GlobalPosition - GlobalPosition).Normalized();
+			Vector2 knockbackDir = (targetNode.GlobalPosition - GlobalPosition).Normalized();
 			if (knockbackDir.Length() < 0.1f)
 				knockbackDir = Scale.X > 0f ? Vector2.Right : Vector2.Left;
 
-			player.TakeDamage(AttackDamage, knockbackDir * AttackKnockback);
+			target.TakeDamage(AttackDamage, knockbackDir * AttackKnockback);
 		}
 	}
 
