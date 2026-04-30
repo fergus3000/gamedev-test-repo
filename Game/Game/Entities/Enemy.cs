@@ -176,6 +176,7 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		Node parent = hurtbox.GetParent();
 		if (parent is IDamageable target && parent is Node2D targetNode)
 		{
+			// Secondary depth check at hit resolution — independent of movement/approach logic
 			if (Mathf.Abs(GlobalPosition.Y - targetNode.GlobalPosition.Y) > CombatConstants.DepthTolerancePx)
 				return;
 
