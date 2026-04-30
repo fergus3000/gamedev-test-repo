@@ -38,6 +38,12 @@ script = ExtResource("3_hitbox")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player/PunchHitbox"]
 shape = SubResource("2_rect_hitbox")
 
+[node name="Hurtbox" type="Area2D" parent="Player"]
+groups = ["hurtbox"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player/Hurtbox"]
+shape = SubResource("1_rect_player")
+
 [node name="Enemy" type="CharacterBody2D" parent="."]
 position = Vector2(500, 300)
 script = ExtResource("4_enemy")
@@ -58,12 +64,19 @@ groups = ["hurtbox"]
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy/Hurtbox"]
 shape = SubResource("3_rect_enemy")
 
+[node name="AttackHitbox" type="Area2D" parent="Enemy"]
+position = Vector2(40, 0)
+script = ExtResource("3_hitbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy/AttackHitbox"]
+shape = SubResource("2_rect_hitbox")
+
 [node name="DebugOverlay" type="CanvasLayer" parent="."]
 
 [node name="Label" type="Label" parent="DebugOverlay"]
 offset_left = 20.0
 offset_top = 20.0
-offset_right = 400.0
-offset_bottom = 60.0
+offset_right = 500.0
+offset_bottom = 80.0
 text = "HP: --  State: --"
 horizontal_alignment = 1

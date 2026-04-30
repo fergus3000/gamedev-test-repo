@@ -9,7 +9,7 @@ The goal of this project is to:
 - Keep systems simple, explicit, and readable
 - Avoid heavy editor-only logic or opaque configuration
 
-This repository is intended to be worked on collaboratively with an AI coding agent (Cursor).
+This repository is intended to be worked on collaboratively with an AI coding agent (Claude Code / VS Code).
 
 ---
 
@@ -30,7 +30,7 @@ This repository is intended to be worked on collaboratively with an AI coding ag
 ## Technical Stack
 - **Engine**: Godot 4.x (Mono / C# build)
 - **Language**: C# (.NET)
-- **IDE**: Cursor (VS Code-compatible)
+- **IDE**: VS Code (with Claude Code)
 - **Version Control**: GitHub (private repo)
 
 ---
@@ -107,8 +107,22 @@ When making changes:
 ---
 
 ## Status
-- Repository initialized
-- Godot project not yet created
-- README defines intent and constraints
 
-Next step: initialize Godot 4 C# project and create first combat sandbox scene.
+### Completed — Initial Combat Sandbox
+The first playable milestone is complete:
+
+- **Player**: WASD movement, J/Space to punch, HP system, hitstun + knockback on hit, dies at 0 HP
+- **Enemy**: walks toward player, melee attack with range check + depth tolerance, hitstun + knockback, dies at 0 HP
+- **Combat**: signal-based hitbox/hurtbox system (`Hitbox.cs`), handles close-range hits correctly via deferred overlap check, dedup prevents multi-hit per swing
+- **Physics**: frame-rate-independent knockback decay (`Mathf.Pow(decay, delta * 60)`)
+- **Debug overlay**: live HP and state readout for both characters
+- **Build script**: `play.sh` in repo root — builds and launches in one command
+
+### Next Steps (not yet started)
+- Camera scrolling to follow player
+- Multiple enemies in scene
+- Additional attack types (kick, jump kick)
+- Stun/grab mechanics
+- Weapon pickup system
+- Health bar UI (replace debug text)
+- Sprite-based graphics (replace coloured rectangles)
