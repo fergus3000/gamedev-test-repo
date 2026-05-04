@@ -223,9 +223,8 @@ public partial class AIManager : Node2D
         if (previousSlot == slot.Name)
             cost -= AIConstants.CostWeightStickiness;
 
-        // c4: wide-slot penalty
-        if (slot.Name is SlotName.WideFront or SlotName.WideRear)
-            cost += AIConstants.CostWeightWide;
+        // c4: slot tier penalty — attack slots cheapest, wide slots most expensive
+        cost += AIConstants.CostWeightTier * AIConstants.GetSlotTierPenalty(slot.Name);
 
         // out-of-bounds penalty
         if (slot.IsClamped)

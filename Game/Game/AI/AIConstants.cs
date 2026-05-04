@@ -20,7 +20,17 @@ public static class AIConstants
     public const float CostWeightDistance   = 1.0f;   // c1: travel time (distance / walkSpeed)
     public const float CostWeightPreference = 0.5f;   // c2: preference mismatch penalty
     public const float CostWeightStickiness = 0.4f;   // c3: stay-in-slot discount (subtracted)
-    public const float CostWeightWide       = 0.3f;   // c4: wide-slot penalty
+    public const float CostWeightTier       = 0.3f;   // c4: slot tier penalty (see GetSlotTierPenalty)
+
+    // Tier penalties — attack slots are always preferred; outer slots penalised progressively
+    public static float GetSlotTierPenalty(AIManager.SlotName slot) => slot switch
+    {
+        AIManager.SlotName.FrontAttack or AIManager.SlotName.RearAttack           => 0.0f,
+        AIManager.SlotName.NearDiagonalFront or AIManager.SlotName.NearDiagonalRear => 0.4f,
+        AIManager.SlotName.FarDiagonalFront  or AIManager.SlotName.FarDiagonalRear  => 0.7f,
+        AIManager.SlotName.WideFront         or AIManager.SlotName.WideRear         => 1.0f,
+        _ => 0.0f
+    };
 
     // World boundary Y limits — slots outside these are clamped and penalised
     public const float BoundaryTop       = 100f;
