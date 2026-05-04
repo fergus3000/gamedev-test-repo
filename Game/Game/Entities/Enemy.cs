@@ -2,30 +2,37 @@ using Godot;
 
 public partial class Enemy : CharacterBody2D, IDamageable
 {
-	[Export] public float MaxHP { get; set; } = 30.0f;
-	[Export] public float WalkSpeed { get; set; } = 80.0f;
-	[Export] public float AttackRange { get; set; } = 55.0f;
-	[Export] public float AttackCooldown { get; set; } = 1.5f;
-	[Export] public float AttackDuration { get; set; } = 0.3f;
-	[Export] public float AttackDamage { get; set; } = 8.0f;
-	[Export] public float AttackKnockback { get; set; } = 200.0f;
-	[Export] public float HitstunDuration { get; set; } = 0.3f;
-	[Export] public float KnockbackDecay { get; set; } = CombatConstants.KnockbackDecayBase;
+	public enum SlotPreference { Front, Rear, None }
+
+	[Export] public float MaxHP            { get; set; } = 30.0f;
+	[Export] public float WalkSpeed        { get; set; } = 80.0f;
+	[Export] public float AttackRange      { get; set; } = 55.0f;
+	[Export] public float AttackCooldown   { get; set; } = 1.5f;
+	[Export] public float AttackDuration   { get; set; } = 0.3f;
+	[Export] public float AttackDamage     { get; set; } = 8.0f;
+	[Export] public float AttackKnockback  { get; set; } = 200.0f;
+	[Export] public float HitstunDuration  { get; set; } = 0.3f;
+	[Export] public float KnockbackDecay   { get; set; } = CombatConstants.KnockbackDecayBase;
+	[Export] public SlotPreference Preference { get; set; } = SlotPreference.None;
 
 	public enum EnemyState { Idle, Walking, Attacking, Hitstun, Dead }
 
-	private float _currentHP;
-	private EnemyState _state = EnemyState.Idle;
-	private float _hitstunTimer = 0.0f;
-	private float _attackTimer = 0.0f;
-	private float _attackCooldownTimer = 0.0f;
-	private Node2D _player;
-	private Area2D _attackHitbox;
-	private Hitbox _hitboxScript;
+	private float      _currentHP;
+	private EnemyState _state              = EnemyState.Idle;
+	private float      _hitstunTimer       = 0.0f;
+	private float      _attackTimer        = 0.0f;
+	private float      _attackCooldownTimer = 0.0f;
+	private Node2D     _player;
+	private Area2D     _attackHitbox;
+	private Hitbox     _hitboxScript;
 	private CanvasItem _visual;
+	private AIManager  _aiManager;
 
-	public float CurrentHP => _currentHP;
-	public EnemyState State => _state;
+	private Vector2 _slotTarget;
+	private bool    _hasSlotTarget = false;
+
+	public float      CurrentHP => _currentHP;
+	public EnemyState State     => _state;
 
 	public override void _Ready()
 	{
@@ -43,8 +50,8 @@ public partial class Enemy : CharacterBody2D, IDamageable
 
 		if (_attackHitbox != null)
 		{
-			_attackHitbox.Monitoring = false;
-			_attackHitbox.Monitorable = false;
+			_attackHitbox.Monitoring   = false;
+			_attackHitbox.Monitorable  = false;
 		}
 
 		var hurtbox = GetNodeOrNull<Area2D>("Hurtbox");
@@ -58,6 +65,16 @@ public partial class Enemy : CharacterBody2D, IDamageable
 			if (colorRect != null)
 				_visual = colorRect;
 		}
+
+		_aiManager = GetNodeOrNull<AIManager>("/root/AIManager");
+		_aiManager?.RegisterEnemy(this);
+	}
+
+	// Called by AIManager each assignment pass
+	public void AssignSlot(Vector2 targetWorldPosition)
+	{
+		_slotTarget    = targetWorldPosition;
+		_hasSlotTarget = true;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -100,6 +117,7 @@ public partial class Enemy : CharacterBody2D, IDamageable
 			_attackCooldownTimer -= delta;
 
 		Vector2 toPlayer = _player.GlobalPosition - GlobalPosition;
+		// Secondary depth check at hit resolution — independent of movement/approach logic
 		bool inDepth = Mathf.Abs(toPlayer.Y) <= CombatConstants.DepthTolerancePx;
 
 		if (toPlayer.Length() <= AttackRange && inDepth && _attackCooldownTimer <= 0f)
@@ -108,8 +126,15 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		}
 		else
 		{
+			// Move toward the assigned slot; fall back to player if no slot yet assigned
+			Vector2 moveTarget = _hasSlotTarget ? _slotTarget : _player.GlobalPosition;
+			Vector2 toTarget   = moveTarget - GlobalPosition;
+
+			// Always face the player (not the slot) so attacks orient correctly
 			UpdateFacing(toPlayer.X > 0f);
-			Velocity = toPlayer.Normalized() * WalkSpeed;
+			Velocity = toTarget.LengthSquared() > 1f
+				? toTarget.Normalized() * WalkSpeed
+				: Vector2.Zero;
 			MoveAndSlide();
 		}
 	}
@@ -130,14 +155,14 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		_hitstunTimer -= delta;
 		if (_hitstunTimer <= 0f)
 		{
-			_state = EnemyState.Walking;
+			_state   = EnemyState.Walking;
 			Velocity = Vector2.Zero;
 		}
 	}
 
 	private void StartAttack()
 	{
-		_state = EnemyState.Attacking;
+		_state       = EnemyState.Attacking;
 		_attackTimer = AttackDuration;
 		if (_attackHitbox != null)
 		{
@@ -152,7 +177,7 @@ public partial class Enemy : CharacterBody2D, IDamageable
 
 	private void EndAttack()
 	{
-		_state = EnemyState.Walking;
+		_state               = EnemyState.Walking;
 		_attackCooldownTimer = AttackCooldown;
 		if (_attackHitbox != null)
 		{
@@ -202,20 +227,22 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		if (_currentHP <= 0.0f)
 		{
 			_currentHP = 0.0f;
-			_state = EnemyState.Dead;
-			Velocity = Vector2.Zero;
+			_state     = EnemyState.Dead;
+			Velocity   = Vector2.Zero;
 
 			var collisionShape = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
 			if (collisionShape != null)
 				collisionShape.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
 			if (_visual != null)
 				_visual.Modulate = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+
+			_aiManager?.DeregisterEnemy(this);
 		}
 		else
 		{
-			_state = EnemyState.Hitstun;
+			_state        = EnemyState.Hitstun;
 			_hitstunTimer = HitstunDuration;
-			Velocity = knockbackVelocity;
+			Velocity      = knockbackVelocity;
 		}
 	}
 

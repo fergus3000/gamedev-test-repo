@@ -8,6 +8,10 @@
 
 config_version=5
 
+[autoload]
+
+AIManager="*res://Game/AI/AIManager.cs"
+
 [application]
 
 config/name="cursorgame"
