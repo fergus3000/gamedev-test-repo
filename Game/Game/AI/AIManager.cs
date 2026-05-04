@@ -2,8 +2,8 @@ using Godot;
 using System.Collections.Generic;
 
 /// <summary>
-/// Autoload singleton. Owns slot layout around the player and runs greedy
-/// slot assignment for all active enemies on a jittered timer.
+/// Autoload singleton. Owns slot layout around the player, runs greedy slot
+/// assignment, and computes waypoint paths around the player's zone of control.
 /// </summary>
 public partial class AIManager : Node2D
 {
@@ -32,11 +32,11 @@ public partial class AIManager : Node2D
 
     [Export] public bool DebugDraw { get; set; } = true;
 
-    private SlotDefinition[]            _slots       = new SlotDefinition[SlotCount];
-    private Node2D                      _player;
-    private readonly List<Enemy>        _enemies     = new();
+    private SlotDefinition[]                  _slots       = new SlotDefinition[SlotCount];
+    private Node2D                            _player;
+    private readonly List<Enemy>              _enemies     = new();
     private readonly Dictionary<Enemy, SlotName?> _enemySlots = new();
-    private float                       _assignmentTimer;
+    private float                             _assignmentTimer;
 
     // -------------------------------------------------------------------------
     // Lifecycle
@@ -62,6 +62,7 @@ public partial class AIManager : Node2D
         if (_assignmentTimer <= 0f)
         {
             RunSlotAssignment();
+            UpdateAllWaypoints();
             float jitter = (GD.Randf() * 2f - 1f) * AIConstants.SlotAssignmentJitter;
             _assignmentTimer = AIConstants.SlotAssignmentInterval + jitter;
         }
@@ -126,8 +127,8 @@ public partial class AIManager : Node2D
             Vector2 pos = _player.GlobalPosition + offset;
 
             bool clamped = false;
-            if (pos.Y < AIConstants.BoundaryTop)        { pos.Y = AIConstants.BoundaryTop;    clamped = true; }
-            else if (pos.Y > AIConstants.BoundaryBottom) { pos.Y = AIConstants.BoundaryBottom; clamped = true; }
+            if (pos.Y < AIConstants.BoundaryTop)         { pos.Y = AIConstants.BoundaryTop;    clamped = true; }
+            else if (pos.Y > AIConstants.BoundaryBottom)  { pos.Y = AIConstants.BoundaryBottom; clamped = true; }
 
             _slots[i].WorldPosition = pos;
             _slots[i].IsClamped     = clamped;
@@ -187,11 +188,11 @@ public partial class AIManager : Node2D
         }
         eligible.Sort((a, b) => sortKeys[a].CompareTo(sortKeys[b]));
 
-        // 5. Greedy assignment — recalculate best available slot per enemy
+        // 5. Greedy assignment — recalculate best available slot per enemy in sorted order
         foreach (var enemy in eligible)
         {
-            float best     = float.MaxValue;
-            int   bestIdx  = -1;
+            float best    = float.MaxValue;
+            int   bestIdx = -1;
             for (int i = 0; i < SlotCount; i++)
             {
                 if (_slots[i].IsOccupied) continue;
@@ -254,6 +255,32 @@ public partial class AIManager : Node2D
     }
 
     // -------------------------------------------------------------------------
+    // Pathfinding
+    // -------------------------------------------------------------------------
+
+    private Rect2 GetZoneOfControl()
+    {
+        var half = new Vector2(AIConstants.ZoneOfControlHalfWidth, AIConstants.ZoneOfControlHalfHeight);
+        return new Rect2(_player.GlobalPosition - half, half * 2f);
+    }
+
+    private void UpdateAllWaypoints()
+    {
+        if (_player == null) return;
+        var obstacles = new List<Rect2> { GetZoneOfControl() };
+
+        foreach (var enemy in _enemies)
+        {
+            if (!_enemySlots.TryGetValue(enemy, out SlotName? slot) || !slot.HasValue) continue;
+            if (enemy.State is Enemy.EnemyState.Dead or Enemy.EnemyState.Hitstun) continue;
+
+            Vector2 slotPos  = _slots[(int)slot.Value].WorldPosition;
+            var     waypoints = PathPlanner.ComputeWaypoints(enemy.GlobalPosition, slotPos, obstacles);
+            enemy.SetWaypoints(waypoints);
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Debug visualisation
     // -------------------------------------------------------------------------
 
@@ -264,6 +291,12 @@ public partial class AIManager : Node2D
         var font = ThemeDB.Singleton.FallbackFont;
         if (font == null) return;
 
+        // Zone of control rectangle
+        var zoc = GetZoneOfControl();
+        DrawRect(zoc, new Color(1f, 0f, 0f, 0.15f), filled: true);
+        DrawRect(zoc, new Color(1f, 0.2f, 0.2f, 0.5f), filled: false);
+
+        // Slot circles and labels
         for (int i = 0; i < SlotCount; i++)
         {
             ref SlotDefinition s = ref _slots[i];
@@ -275,12 +308,24 @@ public partial class AIManager : Node2D
                        s.Name.ToString(), HorizontalAlignment.Left, -1, 11, Colors.White);
         }
 
+        // Enemy waypoint paths: enemy → wp0 → wp1 → slot
         foreach (var enemy in _enemies)
         {
             if (!_enemySlots.TryGetValue(enemy, out SlotName? assigned) || !assigned.HasValue)
                 continue;
-            DrawLine(enemy.GlobalPosition, _slots[(int)assigned.Value].WorldPosition,
-                     new Color(0.4f, 0.9f, 1f, 0.8f), 1f);
+
+            Vector2 slotPos   = _slots[(int)assigned.Value].WorldPosition;
+            var     waypoints = enemy.Waypoints;
+            var     pathColor = new Color(0.4f, 0.9f, 1f, 0.8f);
+
+            Vector2 prev = enemy.GlobalPosition;
+            foreach (var wp in waypoints)
+            {
+                DrawLine(prev, wp, pathColor, 1f);
+                DrawCircle(wp, 5f, Colors.Yellow);
+                prev = wp;
+            }
+            DrawLine(prev, slotPos, pathColor, 1f);
         }
     }
 }

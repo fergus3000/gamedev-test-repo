@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 public partial class Enemy : CharacterBody2D, IDamageable
 {
@@ -28,8 +29,9 @@ public partial class Enemy : CharacterBody2D, IDamageable
 	private CanvasItem _visual;
 	private AIManager  _aiManager;
 
-	private Vector2 _slotTarget;
-	private bool    _hasSlotTarget = false;
+	private Vector2       _slotTarget;
+	private bool          _hasSlotTarget = false;
+	private List<Vector2> _waypoints     = new();
 
 	public float      CurrentHP => _currentHP;
 	public EnemyState State     => _state;
@@ -70,11 +72,19 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		_aiManager?.RegisterEnemy(this);
 	}
 
+	public IReadOnlyList<Vector2> Waypoints => _waypoints;
+
 	// Called by AIManager each assignment pass
 	public void AssignSlot(Vector2 targetWorldPosition)
 	{
 		_slotTarget    = targetWorldPosition;
 		_hasSlotTarget = true;
+	}
+
+	// Called by AIManager after pathfinding; replaces the current waypoint list
+	public void SetWaypoints(List<Vector2> waypoints)
+	{
+		_waypoints = waypoints ?? new List<Vector2>();
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -126,9 +136,16 @@ public partial class Enemy : CharacterBody2D, IDamageable
 		}
 		else
 		{
-			// Move toward the assigned slot; fall back to player if no slot yet assigned
-			Vector2 moveTarget = _hasSlotTarget ? _slotTarget : _player.GlobalPosition;
-			Vector2 toTarget   = moveTarget - GlobalPosition;
+			// Advance through waypoints, popping each one on arrival
+			while (_waypoints.Count > 0 &&
+			       GlobalPosition.DistanceTo(_waypoints[0]) < AIConstants.WaypointArrivalThreshold)
+				_waypoints.RemoveAt(0);
+
+			// Navigate toward the next waypoint if one exists, otherwise go direct to slot
+			Vector2 moveTarget = _waypoints.Count > 0 ? _waypoints[0]
+			                   : _hasSlotTarget       ? _slotTarget
+			                                          : _player.GlobalPosition;
+			Vector2 toTarget = moveTarget - GlobalPosition;
 
 			// Always face the player (not the slot) so attacks orient correctly
 			UpdateFacing(toPlayer.X > 0f);

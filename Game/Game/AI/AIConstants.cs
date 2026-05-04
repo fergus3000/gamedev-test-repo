@@ -36,4 +36,10 @@ public static class AIConstants
     public const float BoundaryTop       = 100f;
     public const float BoundaryBottom    = 500f;
     public const float OutOfBoundsPenalty = 0.5f;
+
+    // Pathfinding
+    public const float ObstacleClearance       = 8.0f;   // padding around obstacles for waypoint corners
+    public const float ZoneOfControlHalfWidth  = 50.0f;  // X half-extent of player ZoC rectangle
+    public const float ZoneOfControlHalfHeight = 30.0f;  // Y half-extent of player ZoC rectangle
+    public const float WaypointArrivalThreshold = 6.0f;  // distance at which a waypoint is considered reached
 }
