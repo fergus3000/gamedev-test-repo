@@ -109,8 +109,6 @@ When making changes:
 ## Status
 
 ### Completed — Initial Combat Sandbox
-The first playable milestone is complete:
-
 - **Player**: WASD movement, J/Space to punch, HP system, hitstun + knockback on hit, dies at 0 HP
 - **Enemy**: walks toward player, melee attack with range check + depth tolerance, hitstun + knockback, dies at 0 HP
 - **Combat**: signal-based hitbox/hurtbox system (`Hitbox.cs`), handles close-range hits correctly via deferred overlap check, dedup prevents multi-hit per swing
@@ -118,9 +116,18 @@ The first playable milestone is complete:
 - **Debug overlay**: live HP and state readout for both characters
 - **Build script**: `play.sh` in repo root — builds and launches in one command
 
+### Completed — AI Slot System (step 1 + 2)
+- **AIManager** (`Game/AI/AIManager.cs`): autoload singleton; owns 8 named slots around the player (`FrontAttack`, `RearAttack`, 4 diagonals, 2 wide flanks); slot world positions recalculate every frame relative to player facing; greedy slot assignment runs every ~500ms on a jittered timer using a 4-term cost function (travel time, slot preference, stickiness, tier penalty)
+- **Slot tiers**: attack slots are always preferred over diagonal and wide slots via a tiered cost weight (`AIConstants.CostWeightTier`)
+- **PathPlanner** (`Game/AI/PathPlanner.cs`): pure-geometry static utility; Liang-Barsky segment/rect intersection; extremal-corner selection for CW/CCW detour routes; handles start-inside-obstacle (nearest edge exit) and boundary-touch edge cases
+- **Zone of Control**: player ZoC rectangle (configurable half-extents) acts as a routing obstacle; enemies navigate around it via 1–2 waypoints; within `DirectApproachRadius` of their slot they go direct
+- **Enemy slot navigation**: each enemy registers with AIManager on spawn; receives a live slot target (updated every frame, not just on assignment ticks) and a waypoint list refreshed each assignment cycle; slot preference (`Front`/`Rear`/`None`) is an inspector-exposed export
+- **Debug visualisation**: ZoC rect, slot circles (green/yellow/grey), enemy waypoint paths, all drawn by AIManager's `_Draw()` with `DebugDraw` export flag
+- **Combat decoupling**: `CollisionMask = 0` on both player and enemy — characters no longer physically push each other; all combat interaction is through the Area2D hitbox/hurtbox system
+
 ### Next Steps (not yet started)
 - Camera scrolling to follow player
-- Multiple enemies in scene
+- Multiple enemies in scene (stress-test slot assignment)
 - Additional attack types (kick, jump kick)
 - Stun/grab mechanics
 - Weapon pickup system
