@@ -7,7 +7,7 @@ public partial class Enemy : CharacterBody2D, IDamageable
 
 	[Export] public float MaxHP            { get; set; } = 30.0f;
 	[Export] public float WalkSpeed        { get; set; } = 80.0f;
-	[Export] public float AttackRange      { get; set; } = 55.0f;
+	[Export] public float AttackRange      { get; set; } = 60.0f;
 	[Export] public float AttackCooldown   { get; set; } = 1.5f;
 	[Export] public float AttackDuration   { get; set; } = 0.3f;
 	[Export] public float AttackDamage     { get; set; } = 8.0f;

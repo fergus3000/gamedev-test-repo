@@ -289,8 +289,18 @@ public partial class AIManager : Node2D
             if (!_enemySlots.TryGetValue(enemy, out SlotName? slot) || !slot.HasValue) continue;
             if (enemy.State is Enemy.EnemyState.Dead or Enemy.EnemyState.Hitstun) continue;
 
-            Vector2 slotPos  = _slots[(int)slot.Value].WorldPosition;
-            var     waypoints = PathPlanner.ComputeWaypoints(enemy.GlobalPosition, slotPos, obstacles);
+            Vector2 slotPos = _slots[(int)slot.Value].WorldPosition;
+
+            // Within DirectApproachRadius the enemy goes straight to the slot.
+            // This avoids re-routing via an opposite ZoC corner when the enemy is
+            // already close and can walk through the ZoC (CollisionMask = 0).
+            if (enemy.GlobalPosition.DistanceTo(slotPos) < AIConstants.DirectApproachRadius)
+            {
+                enemy.SetWaypoints(new System.Collections.Generic.List<Vector2>());
+                continue;
+            }
+
+            var waypoints = PathPlanner.ComputeWaypoints(enemy.GlobalPosition, slotPos, obstacles);
             enemy.SetWaypoints(waypoints);
         }
     }

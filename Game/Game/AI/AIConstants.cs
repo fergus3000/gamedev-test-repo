@@ -38,8 +38,11 @@ public static class AIConstants
     public const float OutOfBoundsPenalty = 0.5f;
 
     // Pathfinding
-    public const float ObstacleClearance       = 8.0f;   // padding around obstacles for waypoint corners
-    public const float ZoneOfControlHalfWidth  = 40.0f;  // X half-extent of player ZoC rectangle
-    public const float ZoneOfControlHalfHeight = 30.0f;  // Y half-extent of player ZoC rectangle
-    public const float WaypointArrivalThreshold = 6.0f;  // distance at which a waypoint is considered reached
+    public const float ObstacleClearance        = 8.0f;   // padding around obstacles for waypoint corners
+    public const float ZoneOfControlHalfWidth   = 40.0f;  // X half-extent of player ZoC rectangle
+    public const float ZoneOfControlHalfHeight  = 30.0f;  // Y half-extent of player ZoC rectangle
+    public const float WaypointArrivalThreshold = 6.0f;   // distance at which a waypoint is considered reached
+    // Within this radius of the slot the enemy goes direct (no ZoC routing). Prevents the enemy
+    // from being sent to an opposite ZoC corner after arriving at a near-side corner.
+    public const float DirectApproachRadius     = 120.0f;
 }
