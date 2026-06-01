@@ -22,6 +22,14 @@ public static class PathPlanner
         foreach (var o in obstacles)
             expanded.Add(Expand(o, AIConstants.ObstacleClearance));
 
+        // Special case: start is inside an obstacle (e.g. enemy walked into ZoC).
+        // Exit straight to the nearest edge rather than routing to a corner.
+        foreach (var rect in expanded)
+        {
+            if (PointInsideRect(start, rect))
+                return new List<Vector2> { NearestEdgeExit(start, rect) };
+        }
+
         int blockerIdx = FindFirstIntersection(start, destination, expanded);
         if (blockerIdx < 0)
             return new List<Vector2>(); // direct path clear
@@ -139,6 +147,30 @@ public static class PathPlanner
         // Require a real interior interval, not just a boundary touch (t0==t1==0
         // occurs when a waypoint corner starts exactly on the rect edge and exits immediately)
         return t1 > t0 + eps;
+    }
+
+    private static bool PointInsideRect(Vector2 point, Rect2 rect) =>
+        point.X > rect.Position.X && point.X < rect.Position.X + rect.Size.X &&
+        point.Y > rect.Position.Y && point.Y < rect.Position.Y + rect.Size.Y;
+
+    /// <summary>
+    /// Returns the closest point on the perimeter of <paramref name="rect"/> to
+    /// <paramref name="point"/>, which must be strictly inside the rect.
+    /// The enemy moves to this point, exiting through the nearest wall.
+    /// </summary>
+    private static Vector2 NearestEdgeExit(Vector2 point, Rect2 rect)
+    {
+        float dLeft   = point.X - rect.Position.X;
+        float dRight  = rect.Position.X + rect.Size.X - point.X;
+        float dTop    = point.Y - rect.Position.Y;
+        float dBottom = rect.Position.Y + rect.Size.Y - point.Y;
+
+        float min = System.Math.Min(System.Math.Min(dLeft, dRight), System.Math.Min(dTop, dBottom));
+
+        if (min == dLeft)   return new Vector2(rect.Position.X,                   point.Y);
+        if (min == dRight)  return new Vector2(rect.Position.X + rect.Size.X,     point.Y);
+        if (min == dTop)    return new Vector2(point.X, rect.Position.Y);
+                            return new Vector2(point.X, rect.Position.Y + rect.Size.Y);
     }
 
     private static Rect2 Expand(Rect2 rect, float margin)

@@ -44,6 +44,11 @@ public partial class Player : CharacterBody2D, IDamageable
 
 		_punchHitbox.Monitoring = false;
 		_punchHitbox.Monitorable = false;
+
+		// Characters interact only through hitbox/hurtbox Area2D — not physics bodies.
+		// CollisionMask=0 prevents CharacterBody2D depenetration from pushing entities around.
+		// Area2D layers are independent and unaffected by this.
+		CollisionMask = 0;
 	}
 
 	public override void _Process(double delta)

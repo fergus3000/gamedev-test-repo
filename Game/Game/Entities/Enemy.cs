@@ -70,14 +70,24 @@ public partial class Enemy : CharacterBody2D, IDamageable
 
 		_aiManager = GetNodeOrNull<AIManager>("/root/AIManager");
 		_aiManager?.RegisterEnemy(this);
+
+		// Characters interact only through hitbox/hurtbox Area2D — not physics bodies.
+		CollisionMask = 0;
 	}
 
 	public IReadOnlyList<Vector2> Waypoints => _waypoints;
 
-	// Called by AIManager each assignment pass
+	// Called by AIManager on slot assignment (also resets waypoints via SetWaypoints on same tick)
 	public void AssignSlot(Vector2 targetWorldPosition)
 	{
 		_slotTarget    = targetWorldPosition;
+		_hasSlotTarget = true;
+	}
+
+	// Called by AIManager every frame to keep the movement target live as the player moves
+	public void UpdateSlotTarget(Vector2 currentSlotPosition)
+	{
+		_slotTarget    = currentSlotPosition;
 		_hasSlotTarget = true;
 	}
 

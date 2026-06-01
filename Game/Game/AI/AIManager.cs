@@ -56,7 +56,10 @@ public partial class AIManager : Node2D
             _player = GetTree().GetFirstNodeInGroup("player") as Node2D;
 
         if (_player != null)
+        {
             RecalculateSlotPositions();
+            PushCurrentSlotPositions();   // keep movement targets live between assignment ticks
+        }
 
         _assignmentTimer -= (float)delta;
         if (_assignmentTimer <= 0f)
@@ -257,6 +260,18 @@ public partial class AIManager : Node2D
     // -------------------------------------------------------------------------
     // Pathfinding
     // -------------------------------------------------------------------------
+
+    // Pushes the current (frame-accurate) slot world position to each assigned enemy.
+    // Called every frame so enemies always chase the live slot, not a 500ms-stale snapshot.
+    private void PushCurrentSlotPositions()
+    {
+        foreach (var enemy in _enemies)
+        {
+            if (!_enemySlots.TryGetValue(enemy, out SlotName? slot) || !slot.HasValue) continue;
+            if (enemy.State is Enemy.EnemyState.Dead or Enemy.EnemyState.Hitstun) continue;
+            enemy.UpdateSlotTarget(_slots[(int)slot.Value].WorldPosition);
+        }
+    }
 
     private Rect2 GetZoneOfControl()
     {
