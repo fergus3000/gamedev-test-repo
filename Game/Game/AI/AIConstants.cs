@@ -20,7 +20,7 @@ public static class AIConstants
     public const float CostWeightDistance   = 1.0f;   // c1: travel time (distance / walkSpeed)
     public const float CostWeightPreference = 0.5f;   // c2: preference mismatch penalty
     public const float CostWeightStickiness = 0.4f;   // c3: stay-in-slot discount (subtracted)
-    public const float CostWeightTier       = 0.3f;   // c4: slot tier penalty (see GetSlotTierPenalty)
+    public const float CostWeightTier       = 5.0f;   // c4: slot tier penalty (see GetSlotTierPenalty)
 
     // Tier penalties — attack slots are always preferred; outer slots penalised progressively
     public static float GetSlotTierPenalty(AIManager.SlotName slot) => slot switch
@@ -39,7 +39,7 @@ public static class AIConstants
 
     // Pathfinding
     public const float ObstacleClearance       = 8.0f;   // padding around obstacles for waypoint corners
-    public const float ZoneOfControlHalfWidth  = 50.0f;  // X half-extent of player ZoC rectangle
+    public const float ZoneOfControlHalfWidth  = 40.0f;  // X half-extent of player ZoC rectangle
     public const float ZoneOfControlHalfHeight = 30.0f;  // Y half-extent of player ZoC rectangle
     public const float WaypointArrivalThreshold = 6.0f;  // distance at which a waypoint is considered reached
 }

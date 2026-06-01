@@ -136,7 +136,9 @@ public static class PathPlanner
                 if (t0 > t1) return false;
             }
         }
-        return true;
+        // Require a real interior interval, not just a boundary touch (t0==t1==0
+        // occurs when a waypoint corner starts exactly on the rect edge and exits immediately)
+        return t1 > t0 + eps;
     }
 
     private static Rect2 Expand(Rect2 rect, float margin)
