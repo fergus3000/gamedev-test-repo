@@ -71,12 +71,39 @@ script = ExtResource("3_hitbox")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy/AttackHitbox"]
 shape = SubResource("2_rect_hitbox")
 
+[node name="Enemy2" type="CharacterBody2D" parent="."]
+position = Vector2(550, 180)
+script = ExtResource("4_enemy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy2"]
+shape = SubResource("3_rect_enemy")
+
+[node name="Visual" type="ColorRect" parent="Enemy2"]
+offset_left = -16.0
+offset_top = -24.0
+offset_right = 16.0
+offset_bottom = 24.0
+color = Color(1, 0.5, 0.1, 1)
+
+[node name="Hurtbox" type="Area2D" parent="Enemy2"]
+groups = ["hurtbox"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy2/Hurtbox"]
+shape = SubResource("3_rect_enemy")
+
+[node name="AttackHitbox" type="Area2D" parent="Enemy2"]
+position = Vector2(40, 0)
+script = ExtResource("3_hitbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy2/AttackHitbox"]
+shape = SubResource("2_rect_hitbox")
+
 [node name="DebugOverlay" type="CanvasLayer" parent="."]
 
 [node name="Label" type="Label" parent="DebugOverlay"]
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 500.0
-offset_bottom = 80.0
+offset_bottom = 100.0
 text = "HP: --  State: --"
 horizontal_alignment = 1

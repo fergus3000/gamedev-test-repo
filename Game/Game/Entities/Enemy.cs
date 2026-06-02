@@ -68,6 +68,8 @@ public partial class Enemy : CharacterBody2D, IDamageable
 				_visual = colorRect;
 		}
 
+		AddToGroup("enemy");
+
 		_aiManager = GetNodeOrNull<AIManager>("/root/AIManager");
 		_aiManager?.RegisterEnemy(this);
 
