@@ -289,16 +289,19 @@ public partial class AIManager : Node2D
             if (!_enemySlots.TryGetValue(enemy, out SlotName? slot) || !slot.HasValue) continue;
             if (enemy.State is Enemy.EnemyState.Dead or Enemy.EnemyState.Hitstun) continue;
 
+            // Never interrupt an in-progress route. _slotTarget stays live via
+            // PushCurrentSlotPositions, so the endpoint is always fresh even if
+            // the waypoints themselves aren't recomputed.
+            if (enemy.Waypoints.Count > 0) continue;
+
             Vector2 slotPos = _slots[(int)slot.Value].WorldPosition;
 
-            // Within DirectApproachRadius the enemy goes straight to the slot.
-            // This avoids re-routing via an opposite ZoC corner when the enemy is
-            // already close and can walk through the ZoC (CollisionMask = 0).
+            // Once all waypoints are consumed and the enemy is within DirectApproachRadius,
+            // let it go straight to the slot. The ZoC is physically passable
+            // (CollisionMask = 0), so routing through it at short range is fine and
+            // avoids sending the enemy to an opposite ZoC corner.
             if (enemy.GlobalPosition.DistanceTo(slotPos) < AIConstants.DirectApproachRadius)
-            {
-                enemy.SetWaypoints(new System.Collections.Generic.List<Vector2>());
                 continue;
-            }
 
             var waypoints = PathPlanner.ComputeWaypoints(enemy.GlobalPosition, slotPos, obstacles);
             enemy.SetWaypoints(waypoints);
